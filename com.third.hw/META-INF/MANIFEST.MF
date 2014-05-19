@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Hw
+Bundle-SymbolicName: com.third.hw;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: com.third.hw.Activator
+Bundle-Vendor: THIRD
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ActivationPolicy: lazy
