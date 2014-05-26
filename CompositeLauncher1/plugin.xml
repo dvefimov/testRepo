@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+      		modes="run,debug" 
+            id="secondlauncher.compositeLaunchConfiguration"
+            public="true"
+            delegate="launcherUtil.CompositeLaunchConfigurationDelegate"
+            name="CompositeConfiguration">
+      </launchConfigurationType>
+   </extension>
+    <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="launcherGui.CompositeLaunchConfigurationTabGroup"
+            id="secondlauncher.MyLaunchConfigurationTabGroup"
+            type="secondlauncher.compositeLaunchConfiguration">
+         <launchMode
+               mode="run">
+         </launchMode>
+         <launchMode
+               mode="debug">
+         </launchMode>
+      </launchConfigurationTabGroup>
+   </extension>
+</plugin>
