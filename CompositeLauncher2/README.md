@@ -4,16 +4,16 @@
 
 3. Import a project into Eclipse.
 
-4. Chose File -> Export -> Deployable plug-ins and fragment -> chose CompositeLauncher. 
+4. Choose File -> Export -> Deployable plug-ins and fragment -> choose CompositeLauncher.
 
 5. Restart Eclipse.
 
-6. Chose Run -> Run Configuration.
+6. Choose Run -> Run Configuration.
 
-7. Create new CompositeConfiguration.
+7. Create a new CompositeConfiguration.
 
-8. Chose available launch configuration from left tree.
+8. Choose available launch configurations from the tree on the left.
 
-9. All selected launch configuration (right column) will launch (the same order) by run button.
+9. All selected launch configurations (right column) will launch (in the same order) by pressing the Run button.
 
-10. You could terminate all launched configuration from additional terminate window, if it necessary.
+10. You could terminate all launched configurations from additional terminate window, if it is necessary.
