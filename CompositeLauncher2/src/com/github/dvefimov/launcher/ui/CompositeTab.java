@@ -55,49 +55,26 @@ import org.eclipse.ui.dialogs.PatternFilter;
 public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		ILaunchConfigurationTab {
 
-	private final List<String> allLaunchConfigurationName = new ArrayList<>(); // existing
-																				// launch(LC)
-																				// config
-																				// in
-																				// current
-																				// system
-	private Map<String, List<ILaunchConfiguration>> availableLaunchConfiguration = new HashMap<>(); // existing
-																									// launch(LC)
-																									// config
-																									// in
-																									// current
-																									// system
-																									// for
-																									// tree
-																									// gui
-																									// presentation
-	private Map<String, Image> availableLaunchConfigurationImage = new HashMap<>();
+	private List<String> allLaunchConfigurationName; // existing launch config (LC) in
+													 // current system
+	private Map<String, List<ILaunchConfiguration>> availableLaunchConfiguration; // existing launch
+													// config (LC) in current system for tree gui presentation
+	private Map<String, Image> availableLaunchConfigurationImage; // existing LC image
+													// current system
 	private List<ILaunchConfiguration> selectedLaunchConfiguration = new ArrayList<>(); // selected
-																						// LC
-																						// in
-																						// current
-																						// system
-	private TableViewer uiSelectedList1; // selected LC ui presentation
+													// LC in current system
+	private TableViewer uiSelectedList; // selected LC ui presentation
 
 	private Tree tree; // to refresh size
 	private Table table;
 	private Composite pComposite;
+	
+	private TreeViewer viewer;
 
-	public static final String COMPOSITE_TYPE_NAME = "Composite Configuration 2"; // type
-																					// of
-																					// my
-																					// launch
-																					// configuration
-																					// -
-																					// look
-																					// at
-																					// plugin.xml
-	public static final String SELECTED_LAUNCHES = "SelectedLaunches"; // name
-																		// of
-																		// attribute
-																		// of
-																		// selected
-																		// LC
+	public static final String COMPOSITE_TYPE_NAME = "Composite Configuration 2"; // type of my launch configuration
+													// - look at plugin.xml
+	public static final String SELECTED_LAUNCHES = "SelectedLaunches"; // name of attribute of
+													// selected LC
 
 	private String current_configuration_name = "";
 	CompositeLauncherLogger debug = new CompositeLauncherLogger();
@@ -109,6 +86,18 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 	 *             if an exception occurs retrieving configurations
 	 */
 	public CompositeTab() throws CoreException {
+		fillConfiguration();
+	}
+
+	/**
+	 * Get available configuration from system and put to application 
+	 * @throws CoreException
+	 */
+	private void fillConfiguration() throws CoreException {
+		availableLaunchConfiguration = new HashMap<>();
+		allLaunchConfigurationName = new ArrayList<>();
+		availableLaunchConfigurationImage = new HashMap<>();
+		
 		ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
 		List<ILaunchConfiguration> list;
 		ImageRegistry imageRegistry = DebugPluginImages.getImageRegistry();
@@ -121,28 +110,29 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 			if (list == null) {
 				list = new ArrayList<>();
 				availableLaunchConfiguration.put(key, list);
-				availableLaunchConfigurationImage.put(key, image); // set
-																	// icon
-																	// for
-																	// type
+				availableLaunchConfigurationImage.put(key, image); // set icon
+																	// for type
 			}
 			list.add(conf);
 
 			String uiConfName = getUIPresentationLC(key, conf.getName());
 			allLaunchConfigurationName.add(uiConfName);
-			availableLaunchConfigurationImage.put(conf.getName(), image); // set
-																			// icon
-																			// for
-																			// configuration
-			availableLaunchConfigurationImage.put(uiConfName, image); // set
-																		// icon
-																		// for
-																		// selected
-																		// configuration
+			availableLaunchConfigurationImage.put(conf.getName(), image); // set icon
+																			// for configuration
+			availableLaunchConfigurationImage.put(uiConfName, image); // set icon
+																		// for selected configuration
 		}
-
 	}
 
+	private void reconstractTree() throws CoreException{
+		viewer.setInput(new Object[0]);
+		fillConfiguration();
+		viewer.setLabelProvider(new CompositeTreeLabelProvider(
+				availableLaunchConfigurationImage));
+		List<Node> nodes = createTreeViewerNodes(availableLaunchConfiguration);
+		viewer.setInput(nodes);
+	}
+	
 	/**
 	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#createControl(org.eclipse.swt.widgets.Composite)
 	 *      Create gui control for composite tab
@@ -163,7 +153,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		PatternFilter filter = new PatternFilter();
 		FilteredTree filteredTree = new FilteredTree(groupAL, SWT.SINGLE
 				| SWT.V_SCROLL | SWT.FULL_SELECTION, filter, true);
-		TreeViewer viewer = filteredTree.getViewer();
+		viewer = filteredTree.getViewer();
 		viewer.setLabelProvider(new CompositeTreeLabelProvider(
 				availableLaunchConfigurationImage));
 		viewer.setContentProvider(new CompositeTreeContentProvider());
@@ -174,25 +164,12 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 
 		tree = viewer.getTree();
 		tree.addListener(SWT.Selection, new Listener() {
-			boolean isInit = true;
-
 			@Override
 			public void handleEvent(Event e) {
 				TreeItem item = tree.getSelection()[0];
-
-				if (item.getParentItem() == null) { // it mean you could not
-													// chose conf type only
-													// expand it
-					boolean expanded = !item.getExpanded();
-					if (!isInit)
-						item.setExpanded(expanded);
-					if (expanded) {
-						tree.setSelection(item.getItems()[0]);
-					} else {
-						tree.deselectAll();
-					}
+				if (item.getParentItem() == null) {  // we should not have possibility select category
+					tree.deselectAll();
 				}
-				isInit = false;
 			}
 		});
 		Group buttonGroup = new Group(topControl, SWT.NONE);
@@ -211,15 +188,15 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		groupSL.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
 		groupSL.setLayout(new GridLayout(1, false));
 		groupSL.setText("Selected launchers new");
-		uiSelectedList1 = new TableViewer(groupSL, SWT.NONE);
+		uiSelectedList = new TableViewer(groupSL, SWT.NONE);
 
-		uiSelectedList1.setLabelProvider(new ColumnLabelProvider() {
+		uiSelectedList.setLabelProvider(new ColumnLabelProvider() {
 			@Override
 			public Color getForeground(Object element) {
 				String s = element.toString();
 				try {
 					if (!allLaunchConfigurationName.contains(s)
-							|| isCycledComposite(s))
+							|| isCycledComposite(s) || current_configuration_name.equals(getConfOrinalName(s)))
 						return Display.getCurrent().getSystemColor(
 								SWT.COLOR_RED);
 					else
@@ -239,7 +216,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 				return im;
 			}
 		});
-		uiSelectedList1.setContentProvider(new ArrayContentProvider() {
+		uiSelectedList.setContentProvider(new ArrayContentProvider() {
 			@Override
 			public Object[] getElements(Object inputElement) {
 				try {
@@ -254,10 +231,10 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 			}
 
 		});
-		table = uiSelectedList1.getTable();
+		table = uiSelectedList.getTable();
 		table.setLayoutData(zeroSizeData); // table will
 		GridData data = new GridData(GridData.FILL, GridData.FILL, true, true);
-		uiSelectedList1.getControl().setLayoutData(data);
+		uiSelectedList.getControl().setLayoutData(data);
 
 		addButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -269,8 +246,9 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 						confTypeName, confName);
 				if (launchConfiguration != null) {
 					selectedLaunchConfiguration.add(launchConfiguration);
+					uiSelectedList.refresh(true);
 				}
-				uiSelectedList1.setInput(new Object());
+				uiSelectedList.setInput(new Object());
 				performApplyButton();
 			}
 		});
@@ -281,7 +259,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 				if (num > -1) {
 					selectedLaunchConfiguration.remove(num);
 				}
-				uiSelectedList1.setInput(new Object());
+				uiSelectedList.setInput(new Object());
 				performApplyButton();
 			}
 		});
@@ -320,7 +298,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 					selectedLaunchConfiguration.add(conf);
 				}
 			}
-			uiSelectedList1.setInput(new Object());
+			uiSelectedList.setInput(new Object());
 		} catch (CoreException e) {
 			debug.logError("Could not initialize from. check LC file.", e);
 			throw new RuntimeException(e);
@@ -335,6 +313,14 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 	 */
 	@Override
 	public void performApply(ILaunchConfigurationWorkingCopy configuration) {
+		try {
+			reconstractTree();  // rename current conf feature
+		} catch (CoreException e) {
+			debug.logError("Could not reconstract tree LC.",
+					e);
+			throw new RuntimeException(e);
+		}
+
 		List<String> mementos = new ArrayList<>();
 		try {
 			for (ILaunchConfiguration conf : selectedLaunchConfiguration) {
@@ -442,8 +428,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 
 	/**
 	 * 
-	 * @param configName
-	 *            Name LC in our format
+	 * @param configName Name LC in our format
 	 * @return true if LC has reference on current LC, otherwise false.
 	 */
 	private boolean isCycledComposite(String configName) throws CoreException {
@@ -564,5 +549,21 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		tableData.heightHint = height + 15;
 		table.setLayoutData(treeData);
 	}
+
+
+	/**
+	 * 
+	 * @param fullName
+	 * @return original LC name
+	 */
+	private String getConfOrinalName(String fullName) {
+		int start = fullName.indexOf("(") + 1;
+		int end = fullName.indexOf(") ");
+		if(start < 0 || end < 0){
+			return fullName; // could not parse this string;
+		}
+		return fullName.substring(end + 2);
+	}
+	
 
 }
