@@ -12,7 +12,7 @@
 
 7. Create new CompositeConfiguration.
 
-8. Chose available launch(composite configuration will not displayed) configuration from left tree.
+8. Chose available launch configuration from left tree.
 
 9. All selected launch configuration (right column) will launch (the same order) by run button.
 
