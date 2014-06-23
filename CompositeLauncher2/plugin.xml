@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>  
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+      		modes="run,debug" 
+            id="com.github.dvefimov.launcher.compositeLaunchConfiguration2"
+            public="true"
+            delegate="com.github.dvefimov.launcher.handlers.CompositeLaunchConfigurationDelegate"
+            name="Composite Configuration 2">
+      </launchConfigurationType>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="com.github.dvefimov.launcher.compositeLaunchConfiguration2"
+            icon="images/icon5.png"
+            id="com.github.dvefimov.launcher.handlers.images.compositeIcon">
+      </launchConfigurationTypeImage>
+   </extension>
+    <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.github.dvefimov.launcher.ui.CompositeLaunchConfigurationTabGroup"
+            id="com.github.dvefimov.launcher.ui.CompositeLaunchConfigurationTabGroup"
+            type="com.github.dvefimov.launcher.compositeLaunchConfiguration2">
+         <launchMode
+               mode="run">
+         </launchMode>
+         <launchMode
+               mode="debug">
+         </launchMode>
+      </launchConfigurationTabGroup>
+   </extension>
+   
+</plugin>
