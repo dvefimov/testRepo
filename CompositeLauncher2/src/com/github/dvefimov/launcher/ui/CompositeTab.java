@@ -65,10 +65,12 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 													// LC in current system
 	private TableViewer uiSelectedList; // selected LC ui presentation
 
-	private Tree tree; // to refresh size
+// to refresh size available and selected LC
+	private Tree tree; 
 	private Table table;
 	private Composite pComposite;
 	
+// to reconstruct tree
 	private TreeViewer viewer;
 
 	public static final String COMPOSITE_TYPE_NAME = "Composite Configuration 2"; // type of my launch configuration
@@ -76,7 +78,9 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 	public static final String SELECTED_LAUNCHES = "SelectedLaunches"; // name of attribute of
 													// selected LC
 
+// to get information about current configuration
 	private String current_configuration_name = "";
+	
 	CompositeLauncherLogger debug = new CompositeLauncherLogger();
 
 	/**
@@ -89,50 +93,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		fillConfiguration();
 	}
 
-	/**
-	 * Get available configuration from system and put to application 
-	 * @throws CoreException
-	 */
-	private void fillConfiguration() throws CoreException {
-		availableLaunchConfiguration = new HashMap<>();
-		allLaunchConfigurationName = new ArrayList<>();
-		availableLaunchConfigurationImage = new HashMap<>();
-		
-		ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-		List<ILaunchConfiguration> list;
-		ImageRegistry imageRegistry = DebugPluginImages.getImageRegistry();
-		for (ILaunchConfiguration conf : manager.getLaunchConfigurations()) {
 
-			String key = conf.getType().getName();
-			Image image = imageRegistry.get(conf.getType().getIdentifier());
-
-			list = availableLaunchConfiguration.get(key);
-			if (list == null) {
-				list = new ArrayList<>();
-				availableLaunchConfiguration.put(key, list);
-				availableLaunchConfigurationImage.put(key, image); // set icon
-																	// for type
-			}
-			list.add(conf);
-
-			String uiConfName = getUIPresentationLC(key, conf.getName());
-			allLaunchConfigurationName.add(uiConfName);
-			availableLaunchConfigurationImage.put(conf.getName(), image); // set icon
-																			// for configuration
-			availableLaunchConfigurationImage.put(uiConfName, image); // set icon
-																		// for selected configuration
-		}
-	}
-
-	private void reconstractTree() throws CoreException{
-		viewer.setInput(new Object[0]);
-		fillConfiguration();
-		viewer.setLabelProvider(new CompositeTreeLabelProvider(
-				availableLaunchConfigurationImage));
-		List<Node> nodes = createTreeViewerNodes(availableLaunchConfiguration);
-		viewer.setInput(nodes);
-	}
-	
 	/**
 	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#createControl(org.eclipse.swt.widgets.Composite)
 	 *      Create gui control for composite tab
@@ -314,7 +275,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 	@Override
 	public void performApply(ILaunchConfigurationWorkingCopy configuration) {
 		try {
-			reconstractTree();  // rename current conf feature
+			reconstructTree();  // rename current conf feature
 		} catch (CoreException e) {
 			debug.logError("Could not reconstract tree LC.",
 					e);
@@ -537,7 +498,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		Composite groupTree = tree.getParent();
 		int width = groupTree.getSize().x;
 		Point size = pComposite.getSize();
-		int height = (int) (0.8 * size.y);
+		int height = (int) (0.75 * size.y);
 
 		GridData treeData = new GridData(SWT.TOP, SWT.LEFT, false, false);
 		treeData.widthHint = width - 7;
@@ -565,5 +526,51 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		return fullName.substring(end + 2);
 	}
 	
+	/**
+	 * Get available configuration from system and put to application 
+	 * @throws CoreException
+	 */
+	private void fillConfiguration() throws CoreException {
+		availableLaunchConfiguration = new HashMap<>();
+		allLaunchConfigurationName = new ArrayList<>();
+		availableLaunchConfigurationImage = new HashMap<>();
+		
+		ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+		List<ILaunchConfiguration> list;
+		ImageRegistry imageRegistry = DebugPluginImages.getImageRegistry();
+		for (ILaunchConfiguration conf : manager.getLaunchConfigurations()) {
 
+			String key = conf.getType().getName();
+			Image image = imageRegistry.get(conf.getType().getIdentifier());
+
+			list = availableLaunchConfiguration.get(key);
+			if (list == null) {
+				list = new ArrayList<>();
+				availableLaunchConfiguration.put(key, list);
+				availableLaunchConfigurationImage.put(key, image); // set icon
+																	// for type
+			}
+			list.add(conf);
+
+			String uiConfName = getUIPresentationLC(key, conf.getName());
+			allLaunchConfigurationName.add(uiConfName);
+			availableLaunchConfigurationImage.put(conf.getName(), image); // set icon
+																			// for configuration
+			availableLaunchConfigurationImage.put(uiConfName, image); // set icon
+																		// for selected configuration
+		}
+	}
+
+	/**
+	 * Construct available LC as tree 
+	 * @throws CoreException
+	 */
+	private void reconstructTree() throws CoreException{
+		fillConfiguration();
+		viewer.setLabelProvider(new CompositeTreeLabelProvider(
+				availableLaunchConfigurationImage));
+		List<Node> nodes = createTreeViewerNodes(availableLaunchConfiguration);
+		viewer.setInput(nodes);
+	}
+	
 }
