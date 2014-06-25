@@ -10,6 +10,8 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.ILaunchConfigurationDelegate;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 
 import com.github.dvefimov.launcher.debug.CompositeLauncherLogger;
 import com.github.dvefimov.launcher.ui.CompositeTab;
@@ -22,8 +24,10 @@ import com.github.dvefimov.launcher.ui.TerminateWindow;
 
 public class CompositeLaunchConfigurationDelegate implements
 		ILaunchConfigurationDelegate {
-	TerminateWindow terminateWindow = new TerminateWindow();
-	CompositeLauncherLogger debug = new CompositeLauncherLogger();
+	
+	TerminateWindow terminateWindow = new TerminateWindow(); // graphic presentation of terminate window
+	CompositeLauncherLogger debug = new CompositeLauncherLogger(); 
+	static Object upLevel = null; // check is SWT display ready readAndDispatch 
 
 	/**
 	 * @see org.eclipse.debug.core.model.ILaunchConfigurationDelegate#launch(org.eclipse.debug.core.ILaunchConfiguration,
@@ -38,8 +42,12 @@ public class CompositeLaunchConfigurationDelegate implements
 
 		List<?> attrs = (List<?>) configuration.getAttribute(
 				CompositeTab.SELECTED_LAUNCHES, new ArrayList<>());
+		if(upLevel == null){
+			upLevel = attrs;
+		}
+		
 		ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-		List<ILaunch> launchers = new ArrayList<>();
+		final List<ILaunch> launchers = new ArrayList<>();
 		for (Object memento : attrs) {
 			if (memento instanceof String) {
 				ILaunchConfiguration conf = manager
@@ -49,10 +57,25 @@ public class CompositeLaunchConfigurationDelegate implements
 			}
 		}
 
+		Display display;
 		if (!launchers.isEmpty()) {
-			terminateWindow.createWindow(launchers);
+			new Runnable() {
+				public void run() {
+					terminateWindow.createWindow(launchers);					
+				}
+			}.run();
 		} else {
 			debug.log("smth wrong! - list of LC isEmpty!");
 		}
+		
+		if(upLevel.equals(attrs)){
+			display = terminateWindow.getDisplay();
+			Shell[] shells = display.getShells();
+			while (!terminateWindow.allShellIsDisposed(shells)) {
+				if (!display.readAndDispatch ()) display.sleep ();
+			}
+			display.dispose ();
+		}
 	}
+	
 }
