@@ -4,7 +4,7 @@
 
 3. Import a project into Eclipse.
 
-4. Choose File -> Export -> Deployable plug-ins and fragment -> choose CompositeLauncher.
+4. Choose File -> Export -> Deployable plug-ins and fragment -> choose CompositeLauncher(Choose 'Install into host' radio button).
 
 5. Restart Eclipse.
 

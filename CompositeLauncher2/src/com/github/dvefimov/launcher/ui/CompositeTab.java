@@ -51,7 +51,6 @@ import org.eclipse.ui.dialogs.PatternFilter;
  * 
  */
 
-@SuppressWarnings("restriction")
 public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		ILaunchConfigurationTab {
 
@@ -241,8 +240,6 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 	 */
 	@Override
 	public void initializeFrom(ILaunchConfiguration configuration) {
-		resizeTree();
-
 		current_configuration_name = configuration.getName();
 		List<?> mementos;
 		try {
@@ -265,6 +262,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 			throw new RuntimeException(e);
 		}
 
+		resizeTree();
 	}
 
 	/**
@@ -277,7 +275,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		try {
 			reconstructTree();  // rename current conf feature
 		} catch (CoreException e) {
-			debug.logError("Could not reconstract tree LC.",
+			debug.logError("Could not reconstruct tree LC.",
 					e);
 			throw new RuntimeException(e);
 		}
@@ -317,9 +315,9 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 			if (isCycle) {
 				return false;
 			}
-			ILaunchConfiguration lConf = ((ILaunchConfigurationWorkingCopy) launchConfig)
-					.getOriginal();
 			if (launchConfig instanceof ILaunchConfigurationWorkingCopy) {
+				ILaunchConfiguration lConf = ((ILaunchConfigurationWorkingCopy) launchConfig)
+						.getOriginal();
 				isCycle = checkHasLoopByThisConf(lConf);
 				if (isCycle) {
 					return false;
@@ -375,11 +373,12 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 								if (isEquals) {
 									return true;
 								} else {
-									return checkHasLoopByThisConf(conf);
+									if(checkHasLoopByThisConf(conf)){
+										return true;
+									}
 								}
 							}
 						}
-
 					}
 				}
 			}
