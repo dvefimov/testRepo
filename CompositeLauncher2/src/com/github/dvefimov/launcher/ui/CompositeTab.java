@@ -126,9 +126,12 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		tree.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event e) {
-				TreeItem item = tree.getSelection()[0];
-				if (item.getParentItem() == null) {  // we should not have possibility select category
-					tree.deselectAll();
+				TreeItem[] selection = tree.getSelection();
+				if(selection.length > 0){
+					TreeItem item = selection[0];
+					if (item.getParentItem() == null) {  // we should not have possibility select category
+						tree.deselectAll();
+					}
 				}
 			}
 		});
@@ -156,7 +159,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 				String s = element.toString();
 				try {
 					if (!allLaunchConfigurationName.contains(s)
-							|| isCycledComposite(s) || current_configuration_name.equals(getConfOrinalName(s)))
+							|| isCycledComposite(s) || current_configuration_name.equals(getConfOriginalName(s)))
 						return Display.getCurrent().getSystemColor(
 								SWT.COLOR_RED);
 					else
@@ -516,7 +519,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 	 * @param fullName
 	 * @return original LC name
 	 */
-	private String getConfOrinalName(String fullName) {
+	private String getConfOriginalName(String fullName) {
 		int start = fullName.indexOf("(") + 1;
 		int end = fullName.indexOf(") ");
 		if(start < 0 || end < 0){
