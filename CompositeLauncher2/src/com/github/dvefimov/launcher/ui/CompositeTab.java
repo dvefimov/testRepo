@@ -40,6 +40,7 @@ import org.eclipse.swt.widgets.Tree;
 import com.github.dvefimov.launcher.debug.CompositeLauncherLogger;
 import com.github.dvefimov.launcher.util.CompositeTreeLabelProvider;
 import com.github.dvefimov.launcher.util.CompositeTreeContentProvider;
+import com.github.dvefimov.launcher.util.GuiNameParser;
 import com.github.dvefimov.launcher.util.Node;
 
 import org.eclipse.swt.widgets.TreeItem;
@@ -79,6 +80,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 
 // to get information about current configuration
 	private String current_configuration_name = "";
+	private GuiNameParser nameParser = new GuiNameParser();
 	
 	CompositeLauncherLogger debug = new CompositeLauncherLogger();
 
@@ -159,7 +161,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 				String s = element.toString();
 				try {
 					if (!allLaunchConfigurationName.contains(s)
-							|| isCycledComposite(s) || current_configuration_name.equals(getConfOriginalName(s)))
+							|| isCycledComposite(s) || current_configuration_name.equals(nameParser.getConfOriginalName(s)))
 						return Display.getCurrent().getSystemColor(
 								SWT.COLOR_RED);
 					else
@@ -395,29 +397,14 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 	 * @return true if LC has reference on current LC, otherwise false.
 	 */
 	private boolean isCycledComposite(String configName) throws CoreException {
-		int start = configName.indexOf("(") + 1;
-		int end = configName.indexOf(") ");
-		if (start > 0 && end > 0) {
-			String name = configName.substring(end + 2);
-			String type = configName.substring(start, end);
+		String name = nameParser.getConfOriginalName(configName);
+		String type = nameParser.getConfType(configName);
+		if (type != null) {
 			ILaunchConfiguration conf = getILaunchConfigurationFromTree(type,
 					name);
 			return checkHasLoopByThisConf(conf);
 		}
 		return false;
-	}
-
-	/**
-	 * @param name
-	 *            LC name
-	 * @param type
-	 *            LC type
-	 * @return Name of LC for ui presentation <br/>
-	 *         format of LC name is '(type) name'. <br/>
-	 *         so DONT use type which name contains bracket!
-	 */
-	private String getUIPresentationLC(String type, String name) {
-		return "(" + type + ") " + name;
 	}
 
 	/**
@@ -435,7 +422,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 			if (conf.exists()) {
 				type = conf.getType().getName();
 			}
-			res.add(getUIPresentationLC(type, conf.getName()));
+			res.add(nameParser.getUIPresentationLC(type, conf.getName()));
 		}
 		return res;
 	}
@@ -513,20 +500,6 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 		table.setLayoutData(treeData);
 	}
 
-
-	/**
-	 * 
-	 * @param fullName
-	 * @return original LC name
-	 */
-	private String getConfOriginalName(String fullName) {
-		int start = fullName.indexOf("(") + 1;
-		int end = fullName.indexOf(") ");
-		if(start < 0 || end < 0){
-			return fullName; // could not parse this string;
-		}
-		return fullName.substring(end + 2);
-	}
 	
 	/**
 	 * Get available configuration from system and put to application 
@@ -554,7 +527,7 @@ public class CompositeTab extends AbstractLaunchConfigurationTab implements
 			}
 			list.add(conf);
 
-			String uiConfName = getUIPresentationLC(key, conf.getName());
+			String uiConfName = nameParser.getUIPresentationLC(key, conf.getName());
 			allLaunchConfigurationName.add(uiConfName);
 			availableLaunchConfigurationImage.put(conf.getName(), image); // set icon
 																			// for configuration
